@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Meeting Summarizer Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .upload-area { border: 2px dashed #ccc; padding: 20px; text-align: center; margin: 20px 0; }
+        button { background: #1976d2; color: white; border: none; padding: 10px 20px; cursor: pointer; margin: 5px; border-radius: 4px; }
+        .status { margin-top: 20px; padding: 10px; background: #f5f5f5; border-radius: 4px; }
+        h1, h2, h3, h4 { color: #1976d2; }
+        pre { white-space: pre-wrap; background: #f8f8f8; padding: 10px; border-radius: 4px; }
+        .progress { width: 100%; height: 20px; background-color: #f0f0f0; border-radius: 10px; margin: 10px 0; }
+        .progress-bar { height: 100%; border-radius: 10px; background-color: #1976d2; transition: width 0.3s; }
+        audio { width: 100%; margin: 10px 0; }
+        .jobs-list { margin-top: 20px; }
+        .job-item { background: #f8f8f8; padding: 10px; margin: 5px 0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+    <h1>Meeting Summarizer</h1>
+    
+    <div class="upload-area">
+        <h2>Upload Meeting Video</h2>
+        <input type="file" id="videoFile" accept="video/*">
+        <button onclick="uploadFile()">Upload & Process</button>
+    </div>
+    
+    <button onclick="listJobs()">List All Jobs</button>
+    <div id="jobsList" class="jobs-list"></div>
+    
+    <div class="status" id="status">Status will appear here</div>
+    
+    <script>
+        function uploadFile() {
+            const fileInput = document.getElementById('videoFile');
+            const statusDiv = document.getElementById('status');
+            
+            if (!fileInput.files.length) {
+                statusDiv.textContent = "Please select a file first";
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            statusDiv.innerHTML = `
+                <h3>Uploading ${file.name}...</h3>
+                <div class="progress">
+                    <div class="progress-bar" style="width: 0%"></div>
+                </div>
+            `;
+            
+            fetch('http://localhost:5000/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.job_id) {
+                    statusDiv.innerHTML = `
+                        <h3>Upload successful!</h3>
+                        <p>Job ID: ${data.job_id}</p>
+                        <p>Starting processing...</p>
+                    `;
+                    startProcessing(data.job_id);
+                } else {
+                    statusDiv.innerHTML = `
+                        <h3>Upload failed</h3>
+                        <p>${data.error || "Unknown error"}</p>
+                    `;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `
+                    <h3>Error</h3>
+                    <p>${error.message}</p>
+                `;
+            });
+        }
+        
+        function startProcessing(jobId) {
+            const statusDiv = document.getElementById('status');
+            
+            fetch(`http://localhost:5000/api/process/${jobId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                statusDiv.innerHTML = `
+                    <h3>Processing started</h3>
+                    <p>Job ID: ${jobId}</p>
+                    <p>Status: ${data.status}</p>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: 10%"></div>
+                    </div>
+                `;
+                pollStatus(jobId);
+            })
+            .catch(error => {
+                statusDiv.innerHTML += `
+                    <h3>Error starting processing</h3>
+                    <p>${error.message}</p>
+                `;
+            });
+        }
+        
+        function pollStatus(jobId) {
+            const statusDiv = document.getElementById('status');
+            const interval = setInterval(() => {
+                fetch(`http://localhost:5000/api/status/${jobId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let progressWidth = 10; // Default progress
+                    
+                    switch (data.status) {
+                        case 'extracting_audio':
+                            progressWidth = 30;
+                            break;
+                        case 'transcribing':
+                            progressWidth = 60;
+                            break;
+                        case 'summarizing':
+                            progressWidth = 90;
+                            break;
+                        case 'completed':
+                            progressWidth = 100;
+                            break;
+                    }
+                    
+                    statusDiv.innerHTML = `
+                        <h3>Processing Job</h3>
+                        <p>Status: <strong>${data.status}</strong></p>
+                        <p>Filename: ${data.filename}</p>
+                        <div class="progress">
+                            <div class="progress-bar" style="width: ${progressWidth}%"></div>
+                        </div>
+                    `;
+                    
+                    if (data.status === 'completed') {
+                        clearInterval(interval);
+                        showResults(jobId, data.results);
+                    } else if (data.status === 'failed') {
+                        clearInterval(interval);
+                        statusDiv.innerHTML += `
+                            <h3>Processing Failed</h3>
+                            <p>Error: ${data.error || "Unknown error"}</p>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    statusDiv.innerHTML += `
+                        <h3>Error checking status</h3>
+                        <p>${error.message}</p>
+                    `;
+                    clearInterval(interval);
+                });
+            }, 3000);
+        }
+        
+        function showResults(jobId, results) {
+            const statusDiv = document.getElementById('status');
+            
+            statusDiv.innerHTML += `
+                <h3>Results</h3>
+                
+                <h4>Audio</h4>
+                <audio controls src="http://localhost:5000${results.audio}"></audio>
+                
+                <div>
+                    <button onclick="fetchTranscript('${jobId}')">Show Transcript</button>
+                    <button onclick="fetchSummary('${jobId}')">Show Summary</button>
+                </div>
+                
+                <div id="transcript"></div>
+                <div id="summary"></div>
+            `;
+        }
+        
+        function fetchTranscript(jobId) {
+            const transcriptDiv = document.getElementById('transcript');
+            transcriptDiv.innerHTML = "<p>Loading transcript...</p>";
+            
+            fetch(`http://localhost:5000/api/results/${jobId}/transcript`)
+            .then(response => response.json())
+            .then(data => {
+                transcriptDiv.innerHTML = `
+                    <h4>Transcript</h4>
+                    <pre>${data.transcript}</pre>
+                `;
+            })
+            .catch(error => {
+                transcriptDiv.innerHTML = `
+                    <h4>Error loading transcript</h4>
+                    <p>${error.message}</p>
+                `;
+            });
+        }
+        
+        function fetchSummary(jobId) {
+            const summaryDiv = document.getElementById('summary');
+            summaryDiv.innerHTML = "<p>Loading summary...</p>";
+            
+            fetch(`http://localhost:5000/api/results/${jobId}/summary`)
+            .then(response => response.json())
+            .then(data => {
+                summaryDiv.innerHTML = `
+                    <h4>Summary</h4>
+                    <div style="background: #f8f8f8; padding: 10px; border-radius: 4px;">${data.summary}</div>
+                `;
+            })
+            .catch(error => {
+                summaryDiv.innerHTML = `
+                    <h4>Error loading summary</h4>
+                    <p>${error.message}</p>
+                `;
+            });
+        }
+        
+        function listJobs() {
+            const jobsListDiv = document.getElementById('jobsList');
+            jobsListDiv.innerHTML = "<p>Loading jobs...</p>";
+            
+            fetch('http://localhost:5000/api/jobs')
+            .then(response => response.json())
+            .then(data => {
+                if (data.jobs && data.jobs.length > 0) {
+                    let jobsHtml = "<h3>Processing Jobs</h3>";
+                    
+                    data.jobs.forEach(job => {
+                        jobsHtml += `
+                            <div class="job-item">
+                                <div>
+                                    <strong>${job.filename}</strong>
+                                    <span>(${job.status})</span>
+                                </div>
+                                <div>
+                                    <button onclick="checkJobStatus('${job.job_id}')">View Job</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    jobsListDiv.innerHTML = jobsHtml;
+                } else {
+                    jobsListDiv.innerHTML = "<p>No jobs found</p>";
+                }
+            })
+            .catch(error => {
+                jobsListDiv.innerHTML = `
+                    <h4>Error loading jobs</h4>
+                    <p>${error.message}</p>
+                `;
+            });
+        }
+        
+        function checkJobStatus(jobId) {
+            fetch(`http://localhost:5000/api/status/${jobId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'completed') {
+                    document.getElementById('status').innerHTML = `
+                        <h3>Job Found</h3>
+                        <p>Status: completed</p>
+                        <p>Filename: ${data.filename}</p>
+                    `;
+                    showResults(jobId, data.results);
+                } else {
+                    pollStatus(jobId);
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerHTML = `
+                    <h3>Error checking job</h3>
+                    <p>${error.message}</p>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
