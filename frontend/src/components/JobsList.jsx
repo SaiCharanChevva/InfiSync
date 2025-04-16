@@ -25,7 +25,10 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+//const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'
+  : 'https://infisync.onrender.com/api';
 
 const JobsList = ({ showNotification }) => {
   const [jobs, setJobs] = useState([]);
