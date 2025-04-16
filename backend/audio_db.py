@@ -4,45 +4,70 @@ from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from datetime import datetime
 import uuid
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 class AudioProcessingDB:
-    def __init__(self, dbname="audio_processing", user="postgres", password="InfiSync25", host="localhost", port="5432"):
-        """Initialize the database connection."""
-        # Connect to the PostgreSQL server
-        self.conn_params = {
-            "dbname": dbname,
-            "user": user,
-            "password": password,
-            "host": host,
-            "port": port
-        }
+    def __init__(self, dbname=None, user=None, password=None, host=None, port=None, url=None):
+        """Initialize the database connection using parameters or a DATABASE_URL."""
+        # Check if DATABASE_URL environment variable exists (provided by Render)
+        database_url = url or os.environ.get("DATABASE_URL")
         
-        # Try to connect to the database, create it if it doesn't exist
-        try:
-            self.conn = psycopg2.connect(**self.conn_params)
+        if database_url:
+            # Use the DATABASE_URL (Render format)
+            logger.info("Connecting to database using DATABASE_URL")
+            self.conn = psycopg2.connect(database_url)
             self.conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
             self.cursor = self.conn.cursor()
-        except psycopg2.OperationalError:
-            # Connect to default postgres database to create our database
-            temp_params = self.conn_params.copy()
-            temp_params["dbname"] = "postgres"
-            conn = psycopg2.connect(**temp_params)
-            conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-            cursor = conn.cursor()
-            cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(dbname)))
-            cursor.close()
-            conn.close()
+        else:
+            # Use individual parameters with environment variable fallbacks
+            self.conn_params = {
+                "dbname": dbname or os.environ.get("DB_NAME", "audio_processing"),
+                "user": user or os.environ.get("DB_USER", "postgres"),
+                "password": password or os.environ.get("DB_PASSWORD", "InfiSync25"),
+                "host": host or os.environ.get("DB_HOST", "localhost"),
+                "port": port or os.environ.get("DB_PORT", "5432")
+            }
             
-            # Now connect to our newly created database
-            self.conn = psycopg2.connect(**self.conn_params)
-            self.conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-            self.cursor = self.conn.cursor()
+            # Try to connect to the database, create it if it doesn't exist
+            try:
+                logger.info(f"Connecting to database {self.conn_params['dbname']} on {self.conn_params['host']}")
+                self.conn = psycopg2.connect(**self.conn_params)
+                self.conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+                self.cursor = self.conn.cursor()
+            except psycopg2.OperationalError as e:
+                logger.warning(f"Error connecting to database: {str(e)}")
+                logger.info("Attempting to create database...")
+                
+                # Connect to default postgres database to create our database
+                try:
+                    temp_params = self.conn_params.copy()
+                    temp_params["dbname"] = "postgres"
+                    conn = psycopg2.connect(**temp_params)
+                    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+                    cursor = conn.cursor()
+                    cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(self.conn_params["dbname"])))
+                    cursor.close()
+                    conn.close()
+                    
+                    # Now connect to our newly created database
+                    self.conn = psycopg2.connect(**self.conn_params)
+                    self.conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+                    self.cursor = self.conn.cursor()
+                    logger.info(f"Successfully created and connected to database {self.conn_params['dbname']}")
+                except Exception as create_error:
+                    logger.error(f"Failed to create database: {str(create_error)}")
+                    raise
         
         # Create tables if they don't exist
         self._create_tables()
     
     def _create_tables(self):
         """Create the necessary tables if they don't exist."""
+        logger.info("Creating tables if they don't exist")
+        
         # Create audio_files table
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS audio_files (
@@ -94,6 +119,8 @@ class AudioProcessingDB:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        
+        logger.info("Tables created successfully")
     
     def store_audio(self, file_path, source=None):
         """
@@ -343,33 +370,20 @@ class AudioProcessingDB:
     
     def close(self):
         """Close the database connection."""
-        if self.cursor:
+        if hasattr(self, 'cursor') and self.cursor:
             self.cursor.close()
-        if self.conn:
+        if hasattr(self, 'conn') and self.conn:
             self.conn.close()
 
 # Example usage
 if __name__ == "__main__":
     db = AudioProcessingDB()
     
-    # Store an audio file
-    audio_id = db.store_audio("path/to/audio.mp3", source="meeting")
-    
-    # Store transcription
-    transcription_text = "This is the transcription of the audio file..."
-    db.store_transcription(audio_id, transcription_text)
-    
-    # Store summary
-    summary_text = "This is a summary of the meeting..."
-    db.store_summary(audio_id, summary_text)
-    
-    # Store action items
-    db.store_action_item(audio_id, "Follow up with marketing team", priority="high", assignee="John")
-    db.store_action_item(audio_id, "Prepare presentation for next meeting", priority="medium", assignee="Sarah")
-    
-    # Get all processed data for the audio file
-    processed_data = db.get_audio_with_processed_data(audio_id)
-    print(processed_data)
-    
-    # Close the connection
-    db.close()
+    # Add some test code to verify the connection
+    try:
+        db.cursor.execute("SELECT 1")
+        print("Database connection successful!")
+    except Exception as e:
+        print(f"Database connection failed: {str(e)}")
+    finally:
+        db.close()
