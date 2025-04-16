@@ -361,7 +361,10 @@ import {
 import Markdown from 'markdown-to-jsx';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'
+  : 'https://infisync.onrender.com/api';
 
 const ResultView = ({ jobId, showNotification }) => {
   const [currentTab, setCurrentTab] = useState(0);
