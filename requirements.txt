@@ -1,0 +1,9 @@
+flask
+flask-cors
+openai-whisper
+torch
+numpy
+transformers
+spacy
+psycopg2-binary
+python-dotenv
