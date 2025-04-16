@@ -13,7 +13,11 @@ import StatusPage from './pages/StatusPage';
 import ResultsPage from './pages/ResultsPage';
 
 // API base URL
-const API_BASE_URL = 'http://localhost:5000/api';
+// const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'
+  : 'https://infisync.onrender.com/api';
+
 
 function App() {
   const [apiConnected, setApiConnected] = useState(false);
