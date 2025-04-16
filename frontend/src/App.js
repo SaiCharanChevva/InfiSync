@@ -12,8 +12,8 @@ import JobsPage from './pages/JobsPage';
 import StatusPage from './pages/StatusPage';
 import ResultsPage from './pages/ResultsPage';
 
-// API base URL
-const API_BASE_URL = 'http://localhost:5000/api';
+// API base URL - use environment variable or fallback to production URL
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://infisync.onrender.com/api';
 
 function App() {
   const [apiConnected, setApiConnected] = useState(false);
