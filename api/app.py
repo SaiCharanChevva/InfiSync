@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 # Enhanced CORS configuration
 # CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
-CORS(app, resources={r"/api/*": {"origins": ["https://infysyncsummarizer.netlify.app/", "http://localhost:3000"]}}, supports_credentials=True)
-
+# CORS(app, resources={r"/api/*": {"origins": ["https://infysyncsummarizer.netlify.app/", "http://localhost:3000"]}}, supports_credentials=True)
+CORS(app, resources={r"/api/*": {"origins": ["https://meetingsummarizerinfysync.netlify.app/", "http://localhost:3000"]}}, supports_credentials=True)
 # Add these headers to each response
 @app.after_request
 def after_request(response):
