@@ -3,7 +3,7 @@ import argparse
 import whisper
 from typing import Optional
 
-def transcribe_audio(audio_path: str, model_name: str = "turbo", language: Optional[str] = None) -> dict:
+def transcribe_audio(audio_path: str, model_name: str = "large", language: Optional[str] = None) -> dict:
     """
     Transcribe an audio file using OpenAI's Whisper model.
     
