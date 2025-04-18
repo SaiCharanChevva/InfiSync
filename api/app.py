@@ -198,7 +198,7 @@ def process_job(job_id):
         # Step 2: Transcribe audio
         job["status"] = "transcribing"
         logger.info(f"Transcribing audio for job {job_id}")
-        result = transcribe.transcribe_audio(audio_path, model_name="large-v3")
+        result = transcribe.transcribe_audio(audio_path, model_name="small")
         formatted_transcript = transcribe.format_transcript(result)
         
         # Save transcript in the results folder
