@@ -3,7 +3,7 @@ import argparse
 import whisper
 from typing import Optional
 
-def transcribe_audio(audio_path: str, model_name: str = "large-v3", language: Optional[str] = None) -> dict:
+def transcribe_audio(audio_path: str, model_name: str = "small", language: Optional[str] = None) -> dict:
     """
     Transcribe an audio file using OpenAI's Whisper model.
     
@@ -65,7 +65,7 @@ def format_time(seconds: float) -> str:
 def main():
     parser = argparse.ArgumentParser(description="Audio Transcription with Whisper")
     parser.add_argument("audio_path", help="Path to the audio file")
-    parser.add_argument("--model", default="large-v3", 
+    parser.add_argument("--model", default="small", 
                       help="Whisper model to use (tiny, base, small, medium, large)")
     parser.add_argument("--language", help="Language code (optional, auto-detects if not specified)")
     parser.add_argument("--output", help="Output file path (optional)")
