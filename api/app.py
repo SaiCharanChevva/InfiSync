@@ -180,6 +180,7 @@ def process_job(job_id):
             output_path=audio_output_path,
             format="wav"
         )
+        print("***********************audio extracted***********************")
         
         # Store the absolute path to the audio file
         job["results"]["audio_path"] = audio_path
