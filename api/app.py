@@ -10,7 +10,7 @@ import threading
 import json
 
 # Import backend modules
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
+sys.path.append(os.path.join(os.path.dirname(_file_), '..', 'backend'))
 from audio_extractor import AudioExtractor
 import transcribe
 import summarize
@@ -20,11 +20,15 @@ from audio_db import AudioProcessingDB
 # Set up logging
 logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(_name_)
 
-app = Flask(__name__)
+app = Flask(_name_)
+
+logger.info("in app.py by ch.b");
+print("in app.py by ch.b 2");
+
 # Enhanced CORS configuration
-CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+CORS(app, resources={r"/api/": {"origins": ""}}, supports_credentials=True)
 # CORS(app, resources={r"/api/*": {"origins": ["https://infysyncsummarizer.netlify.app/", "http://localhost:3000"]}}, supports_credentials=True)
 #CORS(app, resources={r"/api/*": {"origins": ["https://meetingsummarizerinfysync.netlify.app/", "http://localhost:3000"]}}, supports_credentials=True)
 # Add these headers to each response
@@ -43,8 +47,8 @@ if os.environ.get('RENDER'):
     RESULTS_FOLDER = '/tmp/results'
 else:
     # Use local paths for development
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
-    RESULTS_FOLDER = os.path.join(os.path.dirname(__file__), 'results')
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(_file_), 'uploads')
+    RESULTS_FOLDER = os.path.join(os.path.dirname(_file_), 'results')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(RESULTS_FOLDER, exist_ok=True)
@@ -78,7 +82,6 @@ def health_check():
     # Check database connection
     db = get_db_connection()
     if db:
-        db.close()
         return jsonify({"status": "ok", "database": "connected"})
     else:
         return jsonify({"status": "ok", "database": "disconnected"})
@@ -116,7 +119,10 @@ def upload_file():
     else:
         logger.error(f"Failed to save file to {file_path}")
         return jsonify({"error": "Failed to save file"}), 500
-    
+    # add audio file to db
+    db = get_db_connection()
+    audio_id = db.store_audio(file_path)
+    """"
     # Create job entry
     jobs[job_id] = {
         "status": "uploaded",
@@ -127,13 +133,12 @@ def upload_file():
     }
     
     logger.info(f"Started processing job {job_id} for file {file.filename}")
-    
+    """
     return jsonify({
-        "job_id": job_id,
-        "status": "uploaded",
+        "job_id": audio_id,
+        "status": "uploaded to db",
         "message": "File uploaded successfully"
     })
-
 @app.route('/api/process/<job_id>', methods=['POST'])
 def process_video(job_id):
     """Start processing a video file"""
