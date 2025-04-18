@@ -20,9 +20,9 @@ from audio_db import AudioProcessingDB
 # Set up logging
 logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(_name_)
+logger = logging.getLogger(__name__)
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 logger.info("in app.py by ch.b");
 print("in app.py by ch.b 2");
@@ -47,8 +47,8 @@ if os.environ.get('RENDER'):
     RESULTS_FOLDER = '/tmp/results'
 else:
     # Use local paths for development
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(_file_), 'uploads')
-    RESULTS_FOLDER = os.path.join(os.path.dirname(_file_), 'results')
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+    RESULTS_FOLDER = os.path.join(os.path.dirname(__file__), 'results')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(RESULTS_FOLDER, exist_ok=True)
