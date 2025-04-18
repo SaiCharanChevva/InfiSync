@@ -578,13 +578,13 @@ os.makedirs(RESULTS_FOLDER, exist_ok=True)
 
 # Database configuration - modify these according to your setup
 # Use environment variables in production
-DB_CONFIG = { 
-    "dbname": os.environ.get("DB_NAME", "audio_processing"),
-    "user": os.environ.get("DB_USER", "postgres"),
-    "password": os.environ.get("DB_PASSWORD", "InfiSync25"),
-    "host": os.environ.get("DB_HOST", "localhost"),
-    "port": os.environ.get("DB_PORT", "5432")
-            }
+DB_CONFIG = {
+     "dbname": os.environ.get("DB_NAME", "audio_processing"),
+     "user": os.environ.get("DB_USER", "postgres"),
+     "password": os.environ.get("DB_PASSWORD", "InfiSync25"),
+     "host": os.environ.get("DB_HOST", "localhost"),
+     "port": os.environ.get("DB_PORT", "5432")
+ }
 
 logger.info(f"DATABASE_URL present: {'DATABASE_URL' in os.environ}")
 for key in ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]:
