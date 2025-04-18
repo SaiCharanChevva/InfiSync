@@ -51,7 +51,7 @@
                 </div>
             `;
             
-            fetch('http://localhost:5000/api/upload', {
+            fetch('http://meetingsummarizerproj.netlify.app/api/upload', {
                 method: 'POST',
                 body: formData
             })
@@ -82,7 +82,7 @@
         function startProcessing(jobId) {
             const statusDiv = document.getElementById('status');
             
-            fetch(`http://localhost:5000/api/process/${jobId}`, {
+            fetch(`http://meetingsummarizerproj.netlify.app/api/process/${jobId}`, {
                 method: 'POST'
             })
             .then(response => response.json())
@@ -108,7 +108,7 @@
         function pollStatus(jobId) {
             const statusDiv = document.getElementById('status');
             const interval = setInterval(() => {
-                fetch(`http://localhost:5000/api/status/${jobId}`)
+                fetch(`http://meetingsummarizerproj.netlify.app/api/status/${jobId}`)
                 .then(response => response.json())
                 .then(data => {
                     let progressWidth = 10; // Default progress
@@ -165,7 +165,7 @@
                 <h3>Results</h3>
                 
                 <h4>Audio</h4>
-                <audio controls src="http://localhost:5000${results.audio}"></audio>
+                <audio controls src="http://meetingsummarizerproj.netlify.app${results.audio}"></audio>
                 
                 <div>
                     <button onclick="fetchTranscript('${jobId}')">Show Transcript</button>
@@ -181,7 +181,7 @@
             const transcriptDiv = document.getElementById('transcript');
             transcriptDiv.innerHTML = "<p>Loading transcript...</p>";
             
-            fetch(`http://localhost:5000/api/results/${jobId}/transcript`)
+            fetch(`http://meetingsummarizerproj.netlify.app/api/results/${jobId}/transcript`)
             .then(response => response.json())
             .then(data => {
                 transcriptDiv.innerHTML = `
@@ -201,7 +201,7 @@
             const summaryDiv = document.getElementById('summary');
             summaryDiv.innerHTML = "<p>Loading summary...</p>";
             
-            fetch(`http://localhost:5000/api/results/${jobId}/summary`)
+            fetch(`http://meetingsummarizerproj.netlify.app/api/results/${jobId}/summary`)
             .then(response => response.json())
             .then(data => {
                 summaryDiv.innerHTML = `
@@ -221,7 +221,7 @@
             const jobsListDiv = document.getElementById('jobsList');
             jobsListDiv.innerHTML = "<p>Loading jobs...</p>";
             
-            fetch('http://localhost:5000/api/jobs')
+            fetch('http://meetingsummarizerproj.netlify.app/api/jobs')
             .then(response => response.json())
             .then(data => {
                 if (data.jobs && data.jobs.length > 0) {
@@ -255,7 +255,7 @@
         }
         
         function checkJobStatus(jobId) {
-            fetch(`http://localhost:5000/api/status/${jobId}`)
+            fetch(`http://meetingsummarizerproj.netlify.app/api/status/${jobId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'completed') {
