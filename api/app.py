@@ -10,7 +10,7 @@ import threading
 import json
 
 # Import backend modules
-sys.path.append(os.path.join(os.path.dirname(_file_), '..', 'backend'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
 from audio_extractor import AudioExtractor
 import transcribe
 import summarize
