@@ -578,22 +578,19 @@ os.makedirs(RESULTS_FOLDER, exist_ok=True)
 
 # Database configuration - modify these according to your setup
 # Use environment variables in production
-if IS_PRODUCTION:
-    DB_CONFIG = {
-        "dbname": os.environ.get("DB_NAME", "audio_processing"),
-        "user": os.environ.get("DB_USER", "postgres"),
-        "password": os.environ.get("DB_PASSWORD", "InfiSync25"),
-        "host": os.environ.get("DB_HOST", "localhost"),
-        "port": os.environ.get("DB_PORT", "5432")
-    }
-else:
-    DB_CONFIG = {
-        "dbname": "audio_processing",
-        "user": "postgres",
-        "password": "InfiSync25",
-        "host": "localhost",
-        "port": "5432"
-    }
+DB_CONFIG = { "dbname": os.environ.get("DB_NAME", "audio_processing"),
+              "user": os.environ.get("DB_USER", "postgres"),
+              "password": os.environ.get("DB_PASSWORD", "InfiSync25"),
+              "host": os.environ.get("DB_HOST", "localhost"),
+             "port": os.environ.get("DB_PORT", "5432") }
+# else:
+#     DB_CONFIG = {
+#         "dbname": "audio_processing",
+#         "user": "postgres",
+#         "password": "InfiSync25",
+#         "host": "localhost",
+#         "port": "5432"
+#     }
 
 logger.info(f"Database config: {DB_CONFIG['dbname']} on {DB_CONFIG['host']}:{DB_CONFIG['port']}")
 
@@ -807,7 +804,7 @@ def process_job(job_id):
         if not os.path.exists(audio_path):
             raise FileNotFoundError(f"Audio file {audio_path} no longer exists")
             
-        result = transcribe.transcribe_audio(audio_path, model_name="turbo")
+        result = transcribe.transcribe_audio(audio_path, model_name="large-v3")
         formatted_transcript = transcribe.format_transcript(result)
         
         # Save transcript in the results folder
