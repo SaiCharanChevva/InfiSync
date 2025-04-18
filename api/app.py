@@ -23,12 +23,8 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-
-logger.info("in app.py by ch.b");
-print("in app.py by ch.b 2");
-
 # Enhanced CORS configuration
-CORS(app, resources={r"/api/": {"origins": ""}}, supports_credentials=True)
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 # CORS(app, resources={r"/api/*": {"origins": ["https://infysyncsummarizer.netlify.app/", "http://localhost:3000"]}}, supports_credentials=True)
 #CORS(app, resources={r"/api/*": {"origins": ["https://meetingsummarizerinfysync.netlify.app/", "http://localhost:3000"]}}, supports_credentials=True)
 # Add these headers to each response
@@ -82,6 +78,7 @@ def health_check():
     # Check database connection
     db = get_db_connection()
     if db:
+        db.close()
         return jsonify({"status": "ok", "database": "connected"})
     else:
         return jsonify({"status": "ok", "database": "disconnected"})
@@ -119,10 +116,7 @@ def upload_file():
     else:
         logger.error(f"Failed to save file to {file_path}")
         return jsonify({"error": "Failed to save file"}), 500
-    # add audio file to db
-    db = get_db_connection()
-    audio_id = db.store_audio(file_path)
-    """"
+    
     # Create job entry
     jobs[job_id] = {
         "status": "uploaded",
@@ -133,12 +127,13 @@ def upload_file():
     }
     
     logger.info(f"Started processing job {job_id} for file {file.filename}")
-    """
+    
     return jsonify({
-        "job_id": audio_id,
-        "status": "uploaded to db",
+        "job_id": job_id,
+        "status": "uploaded",
         "message": "File uploaded successfully"
     })
+
 @app.route('/api/process/<job_id>', methods=['POST'])
 def process_video(job_id):
     """Start processing a video file"""
@@ -523,6 +518,3 @@ if __name__ == '__main__':
     # Set debug to False in production
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     app.run(debug=debug_mode, host='0.0.0.0', port=port)
-
-
-
