@@ -198,7 +198,7 @@ def process_job(job_id):
         # Step 2: Transcribe audio
         job["status"] = "transcribing"
         logger.info(f"Transcribing audio for job {job_id}")
-        result = transcribe.transcribe_audio(audio_path, model_name="medium")
+        result = transcribe.transcribe_audio(audio_path, model_name="turbo")
         formatted_transcript = transcribe.format_transcript(result)
         
         # Save transcript in the results folder
@@ -247,7 +247,7 @@ def process_job(job_id):
                             text=item["text"],
                             assignee=item.get("assignee", ""),
                             due_date=item.get("due_date", None),
-                            priority="medium"  # Default priority
+                            priority="turbo"  # Default priority
                         )
                         logger.info(f"Action item stored in database with ID: {action_id}")
                     except Exception as e:
